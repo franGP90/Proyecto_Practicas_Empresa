@@ -1,0 +1,26 @@
+<div class="w-screen h-screen overflow-hidden bg-[url('/assets/backgroundImages/fondoBiblioteca.png')]">
+<div class=" mx-1 my-2">
+    <a href="" class="relative p-1 bg-cyan-500 text-md border-2 border-[#e1f4f7] rounded-md text-[#e1f4f7]"> Go Back </a>
+</div>
+<div class="grid place-items-center h-[500px] py-1">
+  <div class="relative border-2 border-[#e1f4f7] h-[260px] text-[#e1f4f7] bg-cyan-500 p-4 rounded-md">
+    Login In Your Account
+    <form [formGroup]="userForm" class="relative flex flex-col py-3 gap-[2px]">
+        <label>Username</label>
+        <input type="text" placeholder="Insert your Username" class="relative text-black bg-[#e1f4f7]" formControlName="username"/>
+
+        <label>Password</label>
+        <input type="text" placeholder="Insert your Password" class="relative text-black bg-[#e1f4f7]" formControlName="password"/>
+
+        <label>Repeat Password</label>
+        <input type="text" placeholder="Repeat Previous Password" class="relative text-black bg-[#e1f4f7]" formControlName="repeatPassword"/>
+    <button (click)="submitSignUp()" class="absolute -bottom-5 right-1 text-cyan-500 bg-[#e1f4f7] rounded-md">
+        Submit
+    </button>
+    </form>
+  </div>
+  @if(error){
+    <div class="error">{{error}}</div>
+  }
+</div>
+</div>
