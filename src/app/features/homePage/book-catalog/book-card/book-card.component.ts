@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-
+import { Router } from '@angular/router';
 @Component({
   selector: 'app-book-card',
   imports: [],
@@ -9,6 +9,12 @@ import { Component, Input } from '@angular/core';
 export class BookCardComponent {
   @Input() title: string = 'Default Title';
   @Input() author: string = 'Default Author';
-  @Input() coverImageUrl: string = '';
+  @Input() bookId: number = 0;
+  @Input() coverImageUrl: string | undefined = 'assets/coverImages/defaultCover.jpg';
+  constructor(private router: Router) {}
 
+
+  openBookPurchasePageHandler() {
+    this.router.navigate(['/book-purchase', this.bookId]);
+  }
 }

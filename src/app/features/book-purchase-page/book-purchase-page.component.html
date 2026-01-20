@@ -1,0 +1,15 @@
+<div class="w-screen overflow-x-hidden h-screen bg-[url('/assets/backgroundImages/fondoBiblioteca.png')]">
+<app-headder-component></app-headder-component>
+<a href="/home-page" class="bg-cyan-500  text-white px-4 py-2 rounded-md">go back</a>
+  <div class="bg-[#e1f4f7] mr-10 ml-10 p-5 grid grid-cols-3 rounded-md opacity-90 overflow-y-auto m-5 shadow-md max-w-3xl mx-auto">
+    <img [src]="book?.cover" alt="Book Cover" class="w-40 col-start-1 h-60 object-cover mb-2 rounded-md"/>
+    <div class="col-start-2">    
+      <p>{{ book?.title }}</p>
+      <p>{{ book?.author }}</p>
+      <p>Price: {{ book?.price }}</p>
+      <p>{{book?.stock}}</p>
+      <button class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mt-4">Comprar</button>
+    </div>
+
+  </div>
+</div>

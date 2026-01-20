@@ -28,7 +28,7 @@ const books = [
     author: 'Tolkien',
     price: 29.95,
     stock: 12,
-    cover: 'lotr.jpg'
+    cover: 'assets/coverImages/lotr.jpg'
   },
   {
     id: 2,
@@ -36,7 +36,14 @@ const books = [
     author: 'George Orwell',
     price: 19.95,
     stock: 7,
-    cover: '1984.jpg'
+    cover: 'assets/coverImages/1984.jpeg'
+  },
+   {
+    id: 3,
+    title: 'Crimen y Castigo',
+    author: 'Dostoyevski',
+    price: 20.00,
+    stock: 7,
   }
 ];
 
