@@ -1,0 +1,9 @@
+
+<div class="w-full h-full">
+    <div class="p-2">
+    <h1>Account Settings for {{ user }}</h1>
+    <form [formGroup]="accountForm" (ngSubmit)="accountForm.value.name ? updateName(accountForm.value.name) : null">
+    <input type="text" placeholder="Update your name" formControlName="name" class="border border-gray-300 rounded-md p-2 mt-2 w-full max-w-md mb-4" />
+    </form>
+    </div>
+</div>

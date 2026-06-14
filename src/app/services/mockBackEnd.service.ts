@@ -2,14 +2,17 @@ import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { of, delay } from 'rxjs';
 import { CartItem } from '../models/cart.model';
 import { Order } from '../models/order.model';
+import { Book } from '../models/book.model';
+import { User } from '../models/user.model';
+import { inject } from '@angular/core';
+import { AuthService } from './auth.service';
 
 /* ============================
    🗄️ Fake database en memoria
    ============================ */
-
-const users = [
-  { id: 1, email: 'ana@demo.com', password: '1234', name: 'Ana' },
-  { id: 2, email: 'luis@demo.com', password: '1234', name: 'Luis' }
+const users:User[] = [
+  { id: 1, email: 'ana@demo.com', password: '1234', name: 'Ana', directions: ['123 Main St, City, Country'], books: [] },
+  { id: 2, email: 'luis@demo.com', password: '1234', name: 'Luis', directions: [], books: [] }
 ];
 
 const carts: Record<number, CartItem[]> = {
@@ -28,7 +31,8 @@ const books = [
     author: 'Tolkien',
     price: 29.95,
     stock: 12,
-    cover: 'assets/coverImages/lotr.jpg'
+    cover: 'assets/coverImages/lotr.jpg',
+    formats: [{formatName:'Tapa Dura', stock: 5}, {formatName:'Tapa Blanda', stock: 7}, {formatName:'Ebook'}],
   },
   {
     id: 2,
@@ -36,7 +40,8 @@ const books = [
     author: 'George Orwell',
     price: 19.95,
     stock: 7,
-    cover: 'assets/coverImages/1984.jpeg'
+    cover: 'assets/coverImages/1984.jpeg',
+    formats: [{formatName:'Tapa Blanda', stock: 7}, {formatName:'Ebook'}],
   },
    {
     id: 3,
@@ -44,6 +49,7 @@ const books = [
     author: 'Dostoyevski',
     price: 20.00,
     stock: 7,
+    formats: [{formatName:'Tapa Dura', stock: 2}, {formatName:'Ebook'}],
   }
 ];
 
@@ -67,8 +73,8 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
 
   /* ---------- REGISTER ---------- */
   if (req.url.endsWith('/api/register') && req.method === 'POST') {
-    const body = req.body as { email: string; password: string; name: string };
-    const { email, password, name } = body;
+    const body = req.body as { email: string; password: string; name: string; directions?: string[], books?: Book[] };
+    const { email, password, name, directions, books } = body;
 
     if (!email || !password || !name) {
       return of(new HttpResponse({
@@ -88,7 +94,9 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
       id: Math.max(...users.map(u => u.id)) + 1,
       email,
       password,
-      name
+      name,
+      directions: directions || [],
+      books: books || []
     };
 
     users.push(newUser);
@@ -131,9 +139,33 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
       status: 200,
       body: {
         token,
-        user: { id: user.id, name: user.name, email: user.email }
+        user: { id: user.id, name: user.name, email: user.email, directions: user.directions, books: user.books }
       }
     })).pipe(delay(500));
+  }
+
+  /* ---------- UPDATE USER ---------- */
+  if (req.url.endsWith('/api/user') && req.method === 'PUT') {
+    console.log('Update user funcionando')
+    const auth = inject(AuthService);
+    const userId = auth.currentUser?.id;
+    if (!userId){ console.log('no autorizado'); return of(new HttpResponse({ status: 401, body: { message: 'No autorizado' } }));}
+
+    const body = req.body as { name: string };
+    const { name } = body;
+
+    const userIndex = users.findIndex(u => u.id === userId);
+    if (userIndex === -1) {
+      console.log('usuario no encontrado')
+      return of(new HttpResponse({ status: 404, body: { message: 'Usuario no encontrado' } }));
+    }
+    
+    users[userIndex].name = name;
+    console.log('Usuario actualizado')
+    return of(new HttpResponse({
+      status: 200,
+      body: { message: 'Usuario actualizado correctamente' }
+    }));
   }
 
   /* ---------- GET CART ---------- */

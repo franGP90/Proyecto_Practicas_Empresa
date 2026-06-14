@@ -1,4 +1,4 @@
-import { Component, effect } from '@angular/core';
+import { Component, effect, signal, WritableSignal } from '@angular/core';
 import { BookCatalogComponent } from './book-catalog/book-catalog.component';
 import { HeadderComponent } from '../../components/headder-component/headder-component.component';
 @Component({
@@ -8,9 +8,9 @@ import { HeadderComponent } from '../../components/headder-component/headder-com
   styleUrl: './home-page.component.scss'
 })
 export class HomePageComponent {
-  protected searchTerm: string = '';
+  protected searchTerm: WritableSignal<string> = signal('');
   onSearch(term: string) {
-    this.searchTerm = term;
+    this.searchTerm.set(term);
     console.log('Search term updated in HomePageComponent:', this.searchTerm);
   }
 }

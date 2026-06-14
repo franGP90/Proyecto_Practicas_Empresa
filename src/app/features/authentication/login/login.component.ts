@@ -32,7 +32,6 @@ export class LoginComponent {
           this.error = err.error?.message || 'Error al registrar'
     }
   });
-    }
-    
+    }   
   }
 }

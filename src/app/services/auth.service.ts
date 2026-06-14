@@ -2,7 +2,6 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, tap } from 'rxjs';
 import { User } from '../models/user.model';
-import { Book } from '../models/book.model';
 
 @Injectable({
   providedIn: 'root'
@@ -34,12 +33,29 @@ export class AuthService {
       );
   }
 
-  register(data: { name: string; email: string; password: string }) {
+  register(data: { name: string; email: string; password: string; directions?: string[] }) {
 
     return this.http.post<any>(`${this.api}/register`, data)
       .pipe(
         tap(res => this.setSession(res))
       );
+  }
+
+  updateName(newName?: string) {
+    if(!newName) return;
+    const currentUser = this.currentUser;
+    if (!currentUser) return;
+
+    this.http.put<any>(`${this.api}/user`, { name: newName }).subscribe({
+      next: (res: any) => {
+        const updatedUser = { ...currentUser, name: newName };
+        this.currentUserSubject.next(updatedUser);
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+      },
+      error: (err) => {
+        console.error('Error al actualizar el nombre del usuario:', err);
+      }
+    });
   }
 
   logout() {

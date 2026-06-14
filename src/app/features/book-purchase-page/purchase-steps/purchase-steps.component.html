@@ -1,0 +1,21 @@
+<div class="fixed inset-0 bg-[url('/assets/backgroundImages/fondoBiblioteca.png')] flex items-center justify-center z-50" *ngIf="closePurchaseDataModal">
+  <div class="bg-white p-6 rounded shadow-md w-96">
+    <h2 class="step-title">Selecciona el formato en el que deseas adquirir el libro</h2>
+    <div *ngFor="let format of book?.formats" class="mb-2">
+      <input type="radio" [value]="format" name="format" (change)="selectedFormat = format" [checked]="selectedFormat === format"/>
+    <label class="ml-2">{{ format?.formatName }} <span *ngIf="format?.formatName !== 'Ebook'">- Stock: {{ format?.stock }}</span></label>
+    </div>
+    @if(selectedFormat?.formatName !== 'Ebook'){
+    <h2 class="step-title">Selecciona una dirección de envío</h2>
+    <div *ngFor="let direccion of user?.directions" class="mb-2">
+      <input type="radio" [value]="direccion" name="direccion" (change)="selectedDireccion = direccion" [checked]="selectedDireccion === direccion"/>
+      <label class="ml-2">{{ direccion }}</label>
+    </div>
+    <div class="mt-4 flex justify-end">
+    </div> 
+  }
+    <h2 class="step-title">Selecciona un método de pago</h2>
+
+    <button (click)="confirmPurchaseData()" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">Confirmar</button>
+    <button (click)="closePurchaseDataModal()" class="bg-gray-300 text-black px-4 py-2 rounded">Cancelar</button>
+  </div> 

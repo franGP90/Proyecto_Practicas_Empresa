@@ -1,5 +1,6 @@
-import { Component, EventEmitter } from '@angular/core';
+import { Component, EventEmitter, inject } from '@angular/core';
 import { Output } from '@angular/core';
+import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-headder-component',
   imports: [],
@@ -7,6 +8,13 @@ import { Output } from '@angular/core';
   styleUrl: './headder-component.component.scss'
 })
 export class HeadderComponent {
+  authService = inject(AuthService);
+  cerrarSesion() {
+    this.authService.logout();
+  }
+
+
+
  @Output() searchEvent = new EventEmitter<string>();
 
  onSearch(event: Event) {
