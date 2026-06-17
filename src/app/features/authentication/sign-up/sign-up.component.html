@@ -6,14 +6,31 @@
   <div class="relative border-2 border-[#e1f4f7] h-[260px] text-[#e1f4f7] bg-cyan-500 p-4 rounded-md">
     Login In Your Account
     <form [formGroup]="userForm" class="relative flex flex-col py-3 gap-[2px]">
-        <label>Username</label>
+
+        <label>Email</label>
         <input type="text" placeholder="Insert your Username" class="relative text-black bg-[#e1f4f7]" formControlName="username"/>
+          <small *ngIf="f.username.touched && f.username.errors?.['required']" class="text-red-200">
+            El correo es obligatorio
+          </small>
+          <small *ngIf="f.username.touched && f.username.errors?.['email']" class="text-red-200">
+            Introduce un correo válido
+          </small>
 
         <label>Password</label>
         <input type="text" placeholder="Insert your Password" class="relative text-black bg-[#e1f4f7]" formControlName="password"/>
+        <small *ngIf="f.password.touched && f.password.errors?.['required']" class="text-red-200">
+          La contraseña es obligatoria
+        </small>
+        <small *ngIf="f.password.touched && f.password.errors?.['minlength']" class="text-red-200">
+          La contraseña debe tener al menos 8 caracteres
+        </small>
 
         <label>Repeat Password</label>
         <input type="text" placeholder="Repeat Previous Password" class="relative text-black bg-[#e1f4f7]" formControlName="repeatPassword"/>
+        <small *ngIf=" f.repeatPassword.touched && f.password.value !== f.repeatPassword.value" class="text-red-200">
+        Las contraseñas no coinciden
+        </small>
+
     <button (click)="submitSignUp()" class="absolute -bottom-5 right-1 text-cyan-500 bg-[#e1f4f7] rounded-md">
         Submit
     </button>

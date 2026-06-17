@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, tap } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { BehaviorSubject, Observable, of, tap } from 'rxjs';
 import { User } from '../models/user.model';
+import { Book } from '../models/book.model';
 
 @Injectable({
   providedIn: 'root'
@@ -13,6 +14,9 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   currentUser$ = this.currentUserSubject.asObservable();
 
+  private cartSubject = new BehaviorSubject<Book[]>([]);
+  cart$ = this.cartSubject.asObservable();
+
   constructor(private http: HttpClient) {
     this.restoreSession();
   }
@@ -22,7 +26,9 @@ export class AuthService {
     const user = localStorage.getItem('user');
 
     if (token && user) {
-      this.currentUserSubject.next(JSON.parse(user));
+      const parsedUser: User = JSON.parse(user);
+    this.currentUserSubject.next(parsedUser);
+    this.cartSubject.next(parsedUser.cart ?? []);
     }
   }
 
@@ -77,4 +83,48 @@ export class AuthService {
     localStorage.setItem('user', JSON.stringify(res.user));
     this.currentUserSubject.next(res.user);
   }
+
+
+addToCart(book: Book): Observable<Book[]> {
+  return this.http.post<Book[]>(`${this.api}/cart`, { book, qty: 1 })
+    .pipe(
+      tap(updatedCart => {
+          console.log('updatedCart del backend:', updatedCart);
+        const cart = updatedCart ?? [];
+        this.cartSubject.next(cart);
+        // ✅ Persiste en localStorage para sobrevivir navegaciones
+        const user = { ...this.currentUser!, cart };
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('cart', JSON.stringify(cart));
+      })
+    );
 }
+removeFromCart(bookId: number): Observable<Book[]> {
+  return this.http.delete<Book[]>(`${this.api}/cart/${bookId}`)
+    .pipe(
+      tap(updatedCart => {
+        const cart = updatedCart ?? [];
+        this.cartSubject.next(cart);
+        const user = { ...this.currentUser!, cart };
+        localStorage.setItem('user', JSON.stringify(user));
+        localStorage.setItem('cart', JSON.stringify(cart));
+      })
+    );
+}
+
+loadCart(): void {
+  if (!this.currentUser) return;
+  this.http.get<Book[]>(`${this.api}/cart`).subscribe({
+    next: books => this.cartSubject.next(books ?? []),
+    error: () => this.cartSubject.next([])
+  });
+}
+
+// ✅ Devuelve Observable en lugar de intentar ser síncrono
+getCart(): Observable<Book[]> {
+  if (!this.currentUser) return of([]);
+
+  return this.http.get<Book[]>(`${this.api}/cart`);
+}
+}
+

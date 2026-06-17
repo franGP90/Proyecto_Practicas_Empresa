@@ -8,7 +8,10 @@
       <p>{{ book?.author }}</p>
       <p>Price: {{ book?.price }}</p>
       <p *ngFor="let format of book?.formats">{{format?.formatName}} - Stock: {{format?.stock}}</p>
+      <div class="flex flex-col">
       <button (click)="onPurchaseClick()" class="bg-blue-500 hover:bg-blue-700 opacity-100 text-white font-bold py-2 px-4 rounded mt-4">Comprar</button>
+      <button (click)="onAddToCart()" class="bg-blue-500 hover:bg-blue-700 opacity-100 text-white font-bold py-2 px-4 rounded mt-4">Añadir al carrito</button>
+      </div>
     </div>
   </div>
 </div>

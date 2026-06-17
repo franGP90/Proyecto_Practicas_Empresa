@@ -5,6 +5,6 @@ export interface User {
   name: string;
   email: string | undefined;
   password: string;
-  books?: Book[];
+  cart?: Book[];
   directions?: string[]; 
 }

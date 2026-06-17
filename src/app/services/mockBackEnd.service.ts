@@ -6,63 +6,16 @@ import { Book } from '../models/book.model';
 import { User } from '../models/user.model';
 import { inject } from '@angular/core';
 import { AuthService } from './auth.service';
+import { DB } from './fake-db';
 
-/* ============================
-   🗄️ Fake database en memoria
-   ============================ */
-const users:User[] = [
-  { id: 1, email: 'ana@demo.com', password: '1234', name: 'Ana', directions: ['123 Main St, City, Country'], books: [] },
-  { id: 2, email: 'luis@demo.com', password: '1234', name: 'Luis', directions: [], books: [] }
-];
-
-const carts: Record<number, CartItem[]> = {
-  1: [],
-  2: []
-};
-
-const orders: Order[] = [];
-
-const tokens = new Map<string, number>(); // token → userId
-
-const books = [
-  {
-    id: 1,
-    title: 'El señor de los anillos',
-    author: 'Tolkien',
-    price: 29.95,
-    stock: 12,
-    cover: 'assets/coverImages/lotr.jpg',
-    formats: [{formatName:'Tapa Dura', stock: 5}, {formatName:'Tapa Blanda', stock: 7}, {formatName:'Ebook'}],
-  },
-  {
-    id: 2,
-    title: '1984',
-    author: 'George Orwell',
-    price: 19.95,
-    stock: 7,
-    cover: 'assets/coverImages/1984.jpeg',
-    formats: [{formatName:'Tapa Blanda', stock: 7}, {formatName:'Ebook'}],
-  },
-   {
-    id: 3,
-    title: 'Crimen y Castigo',
-    author: 'Dostoyevski',
-    price: 20.00,
-    stock: 7,
-    formats: [{formatName:'Tapa Dura', stock: 2}, {formatName:'Ebook'}],
-  }
-];
-
-/* ============================
-   🔐 Helpers
-   ============================ */
 
 function getUserId(req: any): number | null {
   const auth = req.headers.get('Authorization');
+  console.log('Auth header:', auth);
+  console.log('Tokens map:', DB.getTokens());
   if (!auth) return null;
-
   const token = auth.replace('Bearer ', '');
-  return tokens.get(token) ?? null;
+  return DB.getTokens().get(token) ?? null;
 }
 
 /* ============================
@@ -70,6 +23,7 @@ function getUserId(req: any): number | null {
    ============================ */
 
 export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
+  console.log('FakeBackend recibe:', req.method, req.url);
 
   /* ---------- REGISTER ---------- */
   if (req.url.endsWith('/api/register') && req.method === 'POST') {
@@ -83,7 +37,7 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
       }));
     }
 
-    if (users.some(u => u.email === email)) {
+    if (DB.getUsers().some(u => u.email === email)) {
       return of(new HttpResponse({
         status: 409,
         body: { message: 'El email ya está registrado' }
@@ -91,21 +45,21 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
     }
 
     const newUser = {
-      id: Math.max(...users.map(u => u.id)) + 1,
+      id: Math.max(...DB.getUsers().map(u => u.id)) + 1,
       email,
       password,
       name,
       directions: directions || [],
-      books: books || []
+      cart: []
     };
 
-    users.push(newUser);
-    carts[newUser.id] = [];
+    DB.saveUsers([...DB.getUsers(), newUser]);
+    // DB.carts[newUser.id] = [];
 
     const token = 'fake-jwt-' + Math.random();
-    tokens.set(token, newUser.id);
+    DB.saveTokens(new Map([...DB.getTokens(), [token, newUser.id]]));
 
-    users.forEach(e => console.log(e));
+    DB.getUsers().forEach(e => console.log(e));
 
     return of(new HttpResponse({
       status: 201,
@@ -126,20 +80,20 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
     const body = req.body as { email: string; password: string; };
     const { email, password } = body;
 
-    const user = users.find(u => u.email === email && u.password === password);
+    const user = DB.getUsers().find(u => u.email === email && u.password === password);
 
     if (!user) {
       return of(new HttpResponse({ status: 401 }));
     }
 
     const token = 'fake-jwt-' + Math.random();
-    tokens.set(token, user.id);
+    DB.saveTokens(new Map([...DB.getTokens(), [token, user.id]]));
 
     return of(new HttpResponse({
       status: 200,
       body: {
         token,
-        user: { id: user.id, name: user.name, email: user.email, directions: user.directions, books: user.books }
+        user: { id: user.id, name: user.name, email: user.email, directions: user.directions, cart: user.cart }
       }
     })).pipe(delay(500));
   }
@@ -154,13 +108,13 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
     const body = req.body as { name: string };
     const { name } = body;
 
-    const userIndex = users.findIndex(u => u.id === userId);
+    const userIndex = DB.getUsers().findIndex(u => u.id === userId);
     if (userIndex === -1) {
       console.log('usuario no encontrado')
       return of(new HttpResponse({ status: 404, body: { message: 'Usuario no encontrado' } }));
     }
     
-    users[userIndex].name = name;
+    DB.saveUsers(DB.getUsers().map((u, i) => i === userIndex ? { ...u, name } : u));
     console.log('Usuario actualizado')
     return of(new HttpResponse({
       status: 200,
@@ -168,60 +122,94 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
     }));
   }
 
-  /* ---------- GET CART ---------- */
-  if (req.url.endsWith('/api/cart') && req.method === 'GET') {
-    const userId = getUserId(req);
-    if (!userId) return of(new HttpResponse({ status: 401 }));
+/* ---------- ADD TO CART ---------- */
+if (req.url.endsWith('/api/cart') && req.method === 'POST') {
+  const userId = getUserId(req);
+  if (!userId) return of(new HttpResponse({ status: 401 }));
 
-    return of(new HttpResponse({
-      status: 200,
-      body: carts[userId]
-    })).pipe(delay(300));
+  const body = req.body as { book: Book; qty: number };
+  const { book } = body;
+  console.log('Adding to cart:', book); // ← ahora sí debe aparecer
+
+  const user = DB.getUsers().find(u => u.id === userId);
+  if (!user) return of(new HttpResponse({ status: 404 }));
+
+  // ✅ Garantiza que cart existe antes de operar
+  if (!user.cart) user.cart = [];
+
+  const alreadyInCart = user.cart.some(b => b.id === book.id);
+  if (!alreadyInCart) {
+    user.cart.push(book);
   }
 
-  /* ---------- ADD TO CART ---------- */
-  if (req.url.endsWith('/api/cart') && req.method === 'POST') {
-    const userId = getUserId(req);
-    if (!userId) return of(new HttpResponse({ status: 401 }));
-    const body = req.body as { bookId: number; qty: number };
-    const { bookId, qty } = body;
+  // ✅ Siempre devuelve el array, nunca null
+const users = DB.getUsers();
+const updatedUsers = users.map(u => u.id === userId ? { ...u, cart: user.cart } : u);
+DB.saveUsers(updatedUsers);
 
-    const cart = carts[userId];
-    const existing = cart.find(i => i.bookId === bookId);
+  return of(new HttpResponse({ status: 200, body: [...user.cart] }));
+}
 
-    if (existing) {
-      existing.qty += qty;
-    } else {
-      cart.push({ bookId, qty });
-    }
+/* ---------- GET CART ---------- */
+if (req.url.endsWith('/api/cart') && req.method === 'GET') {
+  const userId = getUserId(req);
+    console.log('GET cart - userId:', userId);          // ← ¿llega token?
+  console.log('GET cart - users state:', DB.getUsers()); 
+  if (!userId) return of(new HttpResponse({ status: 401 }));
 
-    return of(new HttpResponse({ status: 200 }));
-  }
+  const user = DB.getUsers().find(u => u.id === userId);
+    console.log('Usuario encontrado:', user);
+  console.log('Cart antes de añadir:', user?.cart);
+  console.log('localStorage users raw:', localStorage.getItem('__fakeDb_users'))
+  console.log('GET cart - user.cart:', user?.cart);   // ← ¿está vacío?
 
-  /* ---------- CHECKOUT ---------- */
-  if (req.url.endsWith('/api/checkout') && req.method === 'POST') {
-    const userId = getUserId(req);
-    if (!userId) return of(new HttpResponse({ status: 401 }));
+  // ✅ Garantiza array aunque user.cart sea undefined
+  return of(new HttpResponse({
+    status: 200,
+    body: user?.cart ?? []
+  })).pipe(delay(300));
+}
 
-    const cart = carts[userId];
+/* ---------- REMOVE FROM CART ---------- */
+if (req.url.match(/\/api\/cart\/\d+$/) && req.method === 'DELETE') {
+  const userId = getUserId(req);
+  if (!userId) return of(new HttpResponse({ status: 401 }));
 
-    const total = cart.reduce((sum, item) => {
-      const book = books.find(b => b.id === item.bookId)!;
-      return sum + book.price * item.qty;
-    }, 0);
+  const bookId = Number(req.url.split('/').pop());
+  const users = DB.getUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) return of(new HttpResponse({ status: 404 }));
 
-    orders.push({
-      id: orders.length + 1,
-      userId,
-      items: [...cart],
-      total,
-      date: new Date().toISOString()
-    });
+  user.cart = (user.cart ?? []).filter(b => b.id !== bookId);
+  DB.saveUsers(users.map(u => u.id === userId ? { ...u, cart: user.cart } : u));
 
-    carts[userId] = [];
+  return of(new HttpResponse({ status: 200, body: [...user.cart] }));
+}
 
-    return of(new HttpResponse({ status: 200 }));
-  }
+  // /* ---------- CHECKOUT ---------- */
+  // if (req.url.endsWith('/api/checkout') && req.method === 'POST') {
+  //   const userId = getUserId(req);
+  //   if (!userId) return of(new HttpResponse({ status: 401 }));
+
+  //   const cart = DB.carts[userId];
+
+  //   const total = cart.reduce((sum, item) => {
+  //     const book = DB.books.find(b => b.id === item.bookId)!;
+  //     return sum + book.price * item.qty;
+  //   }, 0);
+
+  //   DB.orders.push({
+  //     id: DB.orders.length + 1,
+  //     userId,
+  //     items: [...cart],
+  //     total,
+  //     date: new Date().toISOString()
+  //   });
+
+  //   DB.carts[userId] = [];
+
+  //   return of(new HttpResponse({ status: 200 }));
+  // }
 
   /* ---------- GET ORDERS ---------- */
   if (req.url.endsWith('/api/orders') && req.method === 'GET') {
@@ -230,7 +218,7 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
 
     return of(new HttpResponse({
       status: 200,
-      body: orders.filter(o => o.userId === userId)
+      body: DB.getOrders().filter(o => o.userId === userId)
     }));
   }
 
@@ -238,13 +226,13 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
   if (req.url.endsWith('/api/books') && req.method === 'GET') {
     return of(new HttpResponse({
       status: 200,
-      body: books
+      body: DB.books
     })).pipe(delay(500));
   }
 
   if (req.url.match(/\/api\/books\/\d+$/) && req.method === 'GET') {
     const id = Number(req.url.split('/').pop());
-    const book = books.find(b => b.id === id);
+    const book = DB.books.find(b => b.id === id);
 
     return of(new HttpResponse({
       status: 200,

@@ -7,6 +7,7 @@ import { BookPurchasePageComponent } from './features/book-purchase-page/book-pu
 import { PurchaseStepsComponent } from './features/book-purchase-page/purchase-steps/purchase-steps.component';
 import { authGuard } from './services/auth.guard';
 import { MyAccountComponent } from './features/my-account/my-account.component';
+import { CartComponent } from './features/cart/cart.component';
 export const routes: Routes = [
     {
         path: '',
@@ -23,6 +24,11 @@ export const routes: Routes = [
     {
         path: 'home-page',
         component: HomePageComponent,
+        canActivate: [authGuard],
+    },
+    {
+        path: 'cart',
+        component: CartComponent,
         canActivate: [authGuard],
     },
     {
