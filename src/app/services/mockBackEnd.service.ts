@@ -18,14 +18,10 @@ function getUserId(req: any): number | null {
   return DB.getTokens().get(token) ?? null;
 }
 
-/* ============================
-   🚀 Interceptor
-   ============================ */
 
 export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
   console.log('FakeBackend recibe:', req.method, req.url);
 
-  /* ---------- REGISTER ---------- */
   if (req.url.endsWith('/api/register') && req.method === 'POST') {
     const body = req.body as { email: string; password: string; name: string; directions?: string[], books?: Book[] };
     const { email, password, name, directions, books } = body;
@@ -54,7 +50,6 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
     };
 
     DB.saveUsers([...DB.getUsers(), newUser]);
-    // DB.carts[newUser.id] = [];
 
     const token = 'fake-jwt-' + Math.random();
     DB.saveTokens(new Map([...DB.getTokens(), [token, newUser.id]]));
@@ -75,7 +70,6 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
 
   }
 
-  /* ---------- LOGIN ---------- */
   if (req.url.endsWith('/api/login') && req.method === 'POST') {
     const body = req.body as { email: string; password: string; };
     const { email, password } = body;
@@ -98,7 +92,6 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
     })).pipe(delay(500));
   }
 
-  /* ---------- UPDATE USER ---------- */
   if (req.url.endsWith('/api/user') && req.method === 'PUT') {
     console.log('Update user funcionando')
     const auth = inject(AuthService);
@@ -122,19 +115,17 @@ export const FakeBackendInterceptor: HttpInterceptorFn = (req, next) => {
     }));
   }
 
-/* ---------- ADD TO CART ---------- */
 if (req.url.endsWith('/api/cart') && req.method === 'POST') {
   const userId = getUserId(req);
   if (!userId) return of(new HttpResponse({ status: 401 }));
 
   const body = req.body as { book: Book; qty: number };
   const { book } = body;
-  console.log('Adding to cart:', book); // ← ahora sí debe aparecer
+  console.log('Adding to cart:', book);
 
   const user = DB.getUsers().find(u => u.id === userId);
   if (!user) return of(new HttpResponse({ status: 404 }));
 
-  // ✅ Garantiza que cart existe antes de operar
   if (!user.cart) user.cart = [];
 
   const alreadyInCart = user.cart.some(b => b.id === book.id);
@@ -142,7 +133,6 @@ if (req.url.endsWith('/api/cart') && req.method === 'POST') {
     user.cart.push(book);
   }
 
-  // ✅ Siempre devuelve el array, nunca null
 const users = DB.getUsers();
 const updatedUsers = users.map(u => u.id === userId ? { ...u, cart: user.cart } : u);
 DB.saveUsers(updatedUsers);
@@ -150,7 +140,6 @@ DB.saveUsers(updatedUsers);
   return of(new HttpResponse({ status: 200, body: [...user.cart] }));
 }
 
-/* ---------- GET CART ---------- */
 if (req.url.endsWith('/api/cart') && req.method === 'GET') {
   const userId = getUserId(req);
     console.log('GET cart - userId:', userId);          // ← ¿llega token?
@@ -163,14 +152,12 @@ if (req.url.endsWith('/api/cart') && req.method === 'GET') {
   console.log('localStorage users raw:', localStorage.getItem('__fakeDb_users'))
   console.log('GET cart - user.cart:', user?.cart);   // ← ¿está vacío?
 
-  // ✅ Garantiza array aunque user.cart sea undefined
   return of(new HttpResponse({
     status: 200,
     body: user?.cart ?? []
   })).pipe(delay(300));
 }
 
-/* ---------- REMOVE FROM CART ---------- */
 if (req.url.match(/\/api\/cart\/\d+$/) && req.method === 'DELETE') {
   const userId = getUserId(req);
   if (!userId) return of(new HttpResponse({ status: 401 }));
@@ -186,43 +173,35 @@ if (req.url.match(/\/api\/cart\/\d+$/) && req.method === 'DELETE') {
   return of(new HttpResponse({ status: 200, body: [...user.cart] }));
 }
 
-  // /* ---------- CHECKOUT ---------- */
-  // if (req.url.endsWith('/api/checkout') && req.method === 'POST') {
-  //   const userId = getUserId(req);
-  //   if (!userId) return of(new HttpResponse({ status: 401 }));
+if (req.url.endsWith('/api/orders') && req.method === 'POST') {
+  const userId = getUserId(req);
+  if (!userId) return of(new HttpResponse({ status: 401 }));
 
-  //   const cart = DB.carts[userId];
+  const { books } = req.body as { books: Book[] };
+  if (!books?.length) return of(new HttpResponse({ status: 400 }));
 
-  //   const total = cart.reduce((sum, item) => {
-  //     const book = DB.books.find(b => b.id === item.bookId)!;
-  //     return sum + book.price * item.qty;
-  //   }, 0);
+  const orders = DB.getOrders();
+  const newOrder = {
+    id: orders.length + 1,
+    userId,
+    books,
+    date: new Date().toISOString()
+  };
+  DB.saveOrders([...orders, newOrder]);
 
-  //   DB.orders.push({
-  //     id: DB.orders.length + 1,
-  //     userId,
-  //     items: [...cart],
-  //     total,
-  //     date: new Date().toISOString()
-  //   });
+  return of(new HttpResponse({ status: 201, body: newOrder })).pipe(delay(500));
+}
 
-  //   DB.carts[userId] = [];
+if (req.url.endsWith('/api/orders') && req.method === 'GET') {
+  const userId = getUserId(req);
+  if (!userId) return of(new HttpResponse({ status: 401 }));
 
-  //   return of(new HttpResponse({ status: 200 }));
-  // }
+  return of(new HttpResponse({
+    status: 200,
+    body: DB.getOrders().filter(o => o.userId === userId)
+  })).pipe(delay(300));
+}
 
-  /* ---------- GET ORDERS ---------- */
-  if (req.url.endsWith('/api/orders') && req.method === 'GET') {
-    const userId = getUserId(req);
-    if (!userId) return of(new HttpResponse({ status: 401 }));
-
-    return of(new HttpResponse({
-      status: 200,
-      body: DB.getOrders().filter(o => o.userId === userId)
-    }));
-  }
-
-  /* ---------- BOOKS ---------- */
   if (req.url.endsWith('/api/books') && req.method === 'GET') {
     return of(new HttpResponse({
       status: 200,

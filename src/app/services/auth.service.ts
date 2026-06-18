@@ -92,7 +92,6 @@ addToCart(book: Book): Observable<Book[]> {
           console.log('updatedCart del backend:', updatedCart);
         const cart = updatedCart ?? [];
         this.cartSubject.next(cart);
-        // ✅ Persiste en localStorage para sobrevivir navegaciones
         const user = { ...this.currentUser!, cart };
         localStorage.setItem('user', JSON.stringify(user));
         localStorage.setItem('cart', JSON.stringify(cart));
@@ -120,11 +119,28 @@ loadCart(): void {
   });
 }
 
-// ✅ Devuelve Observable en lugar de intentar ser síncrono
 getCart(): Observable<Book[]> {
   if (!this.currentUser) return of([]);
 
   return this.http.get<Book[]>(`${this.api}/cart`);
+}
+
+buyBooks(books: Book[], clearCart = false): Observable<any> {
+  return this.http.post<any>(`${this.api}/orders`, { books })
+    .pipe(
+      tap(() => {
+        if (clearCart) {
+          this.cartSubject.next([]);
+          const user = { ...this.currentUser!, cart: [] };
+          localStorage.setItem('user', JSON.stringify(user));
+          localStorage.setItem('cart', JSON.stringify([]));
+        }
+      })
+    );
+}
+
+getOrders(): Observable<any[]> {
+  return this.http.get<any[]>(`${this.api}/orders`);
 }
 }
 

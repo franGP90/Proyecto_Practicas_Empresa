@@ -1,9 +1,7 @@
-import { CartItem } from "./cart.model";
-
+import { Book } from './book.model';
 export interface Order {
   id: number;
   userId: number;
-  items: CartItem[];
-  total: number;
+  books: Book[];
   date: string;
 }

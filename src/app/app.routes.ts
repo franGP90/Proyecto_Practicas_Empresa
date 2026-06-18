@@ -4,7 +4,7 @@ import { SignUpComponent } from './features/authentication/sign-up/sign-up.compo
 import { LoginComponent } from './features/authentication/login/login.component';
 import { HomePageComponent } from './features/homePage/home-page.component';
 import { BookPurchasePageComponent } from './features/book-purchase-page/book-purchase-page.component';
-import { PurchaseStepsComponent } from './features/book-purchase-page/purchase-steps/purchase-steps.component';
+import { PurchaseConfirmationComponent } from './features/book-purchase-page/purchase-confirmation/purchase-steps.component';
 import { authGuard } from './services/auth.guard';
 import { MyAccountComponent } from './features/my-account/my-account.component';
 import { CartComponent } from './features/cart/cart.component';
@@ -42,8 +42,8 @@ export const routes: Routes = [
         canActivate: [authGuard],  
     },
     {
-        path: 'purchase-steps/:id',
-        component: PurchaseStepsComponent,
+        path: 'purchase-steps',
+        component: PurchaseConfirmationComponent,
         canActivate: [authGuard],
     }
 ];

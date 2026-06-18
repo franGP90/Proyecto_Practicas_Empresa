@@ -1,19 +1,20 @@
 import { Component, effect, Input, OnInit } from '@angular/core';
-import { Book } from '../../models/book.model';
+import { Book, Format } from '../../models/book.model';
 import { BookService } from '../../services/book.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HeadderComponent } from "../../components/headder-component/headder-component.component";
-import { NgFor } from '@angular/common';
+import { NgFor, NgIf, NgClass } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
 @Component({
   selector: 'app-book-purchase-page',
-  imports: [HeadderComponent, NgFor],
+  imports: [HeadderComponent, NgFor, NgIf, NgClass],
   templateUrl: './book-purchase-page.component.html',
   styleUrl: './book-purchase-page.component.scss'
 })
 export class BookPurchasePageComponent implements OnInit {
   @Input() bookId: number = 0;
   book: Book | null = null;
+    selectedFormat: Format | null = null;
 
   constructor(private bookService: BookService, private route: ActivatedRoute, private router: Router, private auth: AuthService) {
 
@@ -23,23 +24,40 @@ export class BookPurchasePageComponent implements OnInit {
       this.bookId = +params['id'];
       this.bookService.getBook(this.bookId).subscribe( data => {
         this.book = data;
+        this.selectedFormat = null;
       });
     });
     
   }
-  onPurchaseClick(){
-    this.router.navigate(['/purchase-steps', this.bookId]);
+ isFormatAvailable(format: Format): boolean {
+    if (format.formatName === 'Ebook') return true;
+    return (format.stock ?? 0) > 0;
   }
+
+  selectFormat(format: Format): void {
+    if (!this.isFormatAvailable(format)) return;
+    this.selectedFormat = format;
+  }
+
    cart: Book[] = [];
+  showCartConfirmation = false;
 
   onAddToCart() {
-  if (!this.book) return;
+  if (!this.book || !this.selectedFormat) return;
   
-  // ✅ Suscríbete al Observable que retorna addToCart
-  // getCart() ya no hace falta aquí, cart$ se actualiza solo via tap()
   this.auth.addToCart(this.book).subscribe({
-    next: (cart) => console.log('Carrito actualizado:', cart),
+    next: (cart) => { console.log('Carrito actualizado:', cart);
+       this.showCartConfirmation = true;
+      setTimeout(() => this.showCartConfirmation = false, 3000);},
     error: (err) => console.error('Error:', err)
+  });
+}
+
+onPurchaseClick() {
+  if (!this.book || !this.selectedFormat) return;
+  this.auth.buyBooks([this.book]).subscribe({
+    next: () => this.router.navigate(['/purchase-steps']),
+    error: (err) => console.error('Error al comprar:', err)
   });
 }
 }

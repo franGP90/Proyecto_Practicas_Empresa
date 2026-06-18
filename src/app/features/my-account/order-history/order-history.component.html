@@ -1,1 +1,30 @@
-<p>order-history works!</p>
+<div class="p-4 h-full overflow-y-auto max-h-full">
+
+  <h2 class="text-xl font-bold mb-4 text-amber-500">Historial de pedidos</h2>
+
+  <ng-container *ngIf="orders$ | async as orders">
+
+    <ng-container *ngIf="orders.length > 0; else noOrders">
+      <div *ngFor="let order of orders" class="border border-cyan-300 rounded-md p-3 mb-3">
+        
+        <p class="text-sm text-gray-500 mb-2">{{ order.date | date:'dd/MM/yyyy HH:mm' }}</p>
+        
+        <div *ngFor="let book of order.books" class="flex justify-between text-gray-800 text-sm border-b border-cyan-100 py-1">
+          <span>{{ book.title }}</span>
+          <span>{{ book.price }}€</span>
+        </div>
+
+        <p class="text-right font-semibold text-amber-500 mt-2">
+          Total: {{ totalPrice(order.books) }}€
+        </p>
+
+      </div>
+    </ng-container>
+
+    <ng-template #noOrders>
+      <p class="text-gray-500 text-center mt-10">No tienes pedidos todavía.</p>
+    </ng-template>
+
+  </ng-container>
+
+</div>

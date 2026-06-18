@@ -25,7 +25,6 @@ const initialBooks: Book[] = [
 ];
 
 export const DB = {
-  // USERS
   getUsers(): User[] {
     const stored = localStorage.getItem('__fakeDb_users');
     return stored ? JSON.parse(stored) : initialUsers;
@@ -34,7 +33,6 @@ export const DB = {
     localStorage.setItem('__fakeDb_users', JSON.stringify(users));
   },
 
-  // TOKENS — Map serializado como array de pares [token, userId]
   getTokens(): Map<string, number> {
     const stored = localStorage.getItem('__fakeDb_tokens');
     return stored ? new Map(JSON.parse(stored)) : new Map();
@@ -43,7 +41,7 @@ export const DB = {
     localStorage.setItem('__fakeDb_tokens', JSON.stringify([...tokens]));
   },
 
-  // ORDERS
+
   getOrders(): Order[] {
     const stored = localStorage.getItem('__fakeDb_orders');
     return stored ? JSON.parse(stored) : [];
@@ -52,6 +50,5 @@ export const DB = {
     localStorage.setItem('__fakeDb_orders', JSON.stringify(orders));
   },
 
-  // BOOKS — solo lectura, no cambian
   books: initialBooks
 };

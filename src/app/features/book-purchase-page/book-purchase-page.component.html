@@ -1,16 +1,47 @@
 <div class="w-screen overflow-x-hidden h-screen bg-[url('/assets/backgroundImages/fondoBiblioteca.png')]">
 <app-headder-component></app-headder-component>
-<a href="/home-page" class="bg-cyan-500  text-white px-4 py-2 rounded-md">go back</a>
+<div class="m-5">
+  <a href="/home-page" class="bg-cyan-500  text-white px-4 py-2 rounded-md">go back</a>
+</div>
   <div class="bg-[#e1f4f7] mr-10 ml-10 p-5 grid grid-cols-3 rounded-md opacity-90 overflow-y-auto m-5 shadow-md max-w-3xl mx-auto">
     <img [src]="book?.cover ?? '/assets/coverImages/noCover.jpg'" alt="Book Cover" class="opacity-100 w-40 col-start-1 h-60 object-cover mb-2 rounded-md"/>
     <div class="col-start-2 opacity-100 col-end-4 flex flex-col justify-center items-start ml-5">    
       <p>{{ book?.title }}</p>
       <p>{{ book?.author }}</p>
       <p>Price: {{ book?.price }}</p>
-      <p *ngFor="let format of book?.formats">{{format?.formatName}} - Stock: {{format?.stock}}</p>
-      <div class="flex flex-col">
-      <button (click)="onPurchaseClick()" class="bg-blue-500 hover:bg-blue-700 opacity-100 text-white font-bold py-2 px-4 rounded mt-4">Comprar</button>
-      <button (click)="onAddToCart()" class="bg-blue-500 hover:bg-blue-700 opacity-100 text-white font-bold py-2 px-4 rounded mt-4">Añadir al carrito</button>
+    <p class="font-semibold mt-2">Selecciona un formato:</p>
+      <div class="flex flex-wrap gap-2">
+        <button
+          *ngFor="let format of book?.formats"
+          (click)="selectFormat(format)"
+          [disabled]="!isFormatAvailable(format)"
+          [ngClass]="{
+            'bg-blue-500 text-white':        selectedFormat === format,
+            'bg-white text-blue-500 border border-blue-500': selectedFormat !== format && isFormatAvailable(format),
+            'bg-gray-200 text-gray-400 cursor-not-allowed':  !isFormatAvailable(format)
+          }"
+          class="px-3 py-1 rounded-md text-sm font-medium transition-colors"
+        >
+          {{ format.formatName }}
+          <span *ngIf="format.formatName !== 'Ebook'"> ({{ format.stock ?? 0 }})</span>
+        </button>
+      </div>
+
+      <p *ngIf="!selectedFormat" class="text-sm text-amber-500 mt-1">
+        Selecciona un formato para continuar
+      </p>      
+      
+      <div *ngIf="showCartConfirmation" class="flex items-center gap-2 bg-green-100 border border-green-400 text-green-700 px-3 py-2 rounded-md text-sm mt-2 transition-all">
+        <span>{{ book?.title }} añadido al carrito</span>
+      </div>
+
+      <div class="flex flex-col gap-2 mt-3">
+      <button (click)="onPurchaseClick()" 
+      [disabled]="!selectedFormat"
+      class="bg-blue-500 hover:bg-blue-700 cursor-pointer disabled:cursor-not-allowed disabled:bg-blue-300 disabled:hover:bg-blue-300 opacity-100 text-white font-bold py-2 px-4 rounded mt-4">Comprar</button>
+      <button (click)="onAddToCart()" 
+      [disabled]="!selectedFormat"
+      class="bg-blue-500 hover:bg-blue-700 cursor-pointer disabled:cursor-not-allowed disabled:bg-blue-300 disabled:hover:bg-blue-300 opacity-100 text-white font-bold py-2 px-4 rounded mt-4">Añadir al carrito</button>
       </div>
     </div>
   </div>
