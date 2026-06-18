@@ -1,9 +1,55 @@
 
-<div class="w-full h-full">
-    <div class="p-2">
-    <h1>Account Settings for {{ user }}</h1>
-    <form [formGroup]="accountForm" (ngSubmit)="accountForm.value.name ? updateName(accountForm.value.name) : null">
-    <input type="text" placeholder="Update your name" formControlName="name" class="border border-gray-300 rounded-md p-2 mt-2 w-full max-w-md mb-4" />
-    </form>
-    </div>
+<div class="p-4 h-full overflow-y-auto">
+
+  <h2 class="text-xl font-bold mb-4 text-amber-500">Ajustes de cuenta</h2>
+
+  <form [formGroup]="accountForm" class="flex flex-col gap-2 mb-6">
+    <label class="text-sm font-semibold">Nombre</label>
+    <input
+      type="text"
+      [placeholder]="user"
+      formControlName="name"
+      class="border border-cyan-300 rounded-md p-2 text-sm"
+    />
+    <button
+      type="button"
+      (click)="updateName(accountForm.controls.name.value || user)"
+      class="bg-cyan-500 hover:bg-cyan-700 text-white font-bold py-1 px-3 rounded-md w-fit text-sm"
+    >
+      Actualizar nombre
+    </button>
+  </form>
+
+  <h2 class="text-xl font-bold mb-2 text-amber-500">Direcciones de envío</h2>
+
+  <div *ngFor="let dir of directions" class="flex justify-between items-center border-b border-cyan-100 py-2 text-sm">
+    <span>{{ dir }}</span>
+    <button
+      (click)="removeDirection(dir)"
+      class="bg-red-500 hover:bg-red-700 text-white px-2 rounded-md text-xs"
+    >
+      -
+    </button>
+  </div>
+
+  <p *ngIf="directions.length === 0" class="text-gray-500 text-sm mt-2">
+    No tienes direcciones guardadas.
+  </p>
+
+  <form [formGroup]="directionForm" class="flex gap-2 mt-4">
+    <input
+      type="text"
+      placeholder="Nueva dirección"
+      formControlName="newDirection"
+      class="border border-cyan-300 rounded-md p-2 text-sm flex-1"
+    />
+    <button
+      type="button"
+      (click)="addDirection()"
+      class="bg-cyan-500 hover:bg-cyan-700 text-white font-bold py-1 px-3 rounded-md text-sm"
+    >
+      Añadir
+    </button>
+  </form>
+
 </div>

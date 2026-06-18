@@ -1,13 +1,15 @@
-import { Component, effect, Input, OnInit } from '@angular/core';
+import { Component, effect, Input, OnInit, NgModule } from '@angular/core';
 import { Book, Format } from '../../models/book.model';
 import { BookService } from '../../services/book.service';
 import { ActivatedRoute, Router } from '@angular/router';
 import { HeadderComponent } from "../../components/headder-component/headder-component.component";
 import { NgFor, NgIf, NgClass } from '@angular/common';
 import { AuthService } from '../../services/auth.service';
+import { FormsModule } from '@angular/forms';
+
 @Component({
   selector: 'app-book-purchase-page',
-  imports: [HeadderComponent, NgFor, NgIf, NgClass],
+  imports: [HeadderComponent, NgFor, NgIf, NgClass , FormsModule],
   templateUrl: './book-purchase-page.component.html',
   styleUrl: './book-purchase-page.component.scss'
 })
@@ -16,7 +18,7 @@ export class BookPurchasePageComponent implements OnInit {
   book: Book | null = null;
     selectedFormat: Format | null = null;
 
-  constructor(private bookService: BookService, private route: ActivatedRoute, private router: Router, private auth: AuthService) {
+  constructor(private bookService: BookService, private route: ActivatedRoute, private router: Router, protected auth: AuthService) {
 
   }
   ngOnInit(): void {
@@ -53,9 +55,11 @@ export class BookPurchasePageComponent implements OnInit {
   });
 }
 
-onPurchaseClick() {
-  if (!this.book || !this.selectedFormat) return;
-  this.auth.buyBooks([this.book]).subscribe({
+selectedDirection: string | null = null;
+
+onPurchaseClick(): void {
+  if (!this.book || !this.selectedFormat || !this.selectedDirection) return;
+  this.auth.buyBooks([{ book: this.book, format: this.selectedFormat }], this.selectedDirection).subscribe({
     next: () => this.router.navigate(['/purchase-steps']),
     error: (err) => console.error('Error al comprar:', err)
   });

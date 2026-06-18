@@ -3,18 +3,31 @@
     <a href="" class="p-1 bg-cyan-500 text-md border-2 border-[#e1f4f7] rounded-md text-[#e1f4f7]"> Go Back </a>
 </div>
 <div class="grid place-items-center h-[210px] py-1">
-  <div class="relative border-2 border-[#e1f4f7] h-[210px] text-[#e1f4f7] bg-cyan-500 p-4 rounded-md">
+  <div class="w-fit relative border-2 border-[#e1f4f7] min-h-[220px] text-[#e1f4f7] bg-cyan-500 p-4 rounded-md">
     Login In Your Account
     <form [formGroup]="userForm" class="flex flex-col py-1 gap-[2px]">
-        <label>Username</label>
+        <label>Email</label>
         <input type="text" placeholder="Insert your Username" class="relative text-black bg-[#e1f4f7]" formControlName="username"/>
-
+        <small *ngIf="f.username.touched && f.username.errors?.['required']" class="text-red-200">
+            El correo es obligatorio
+        </small>
         <label>Password</label>
-        <input type="text" placeholder="Insert your Password" class="relative text-black bg-[#e1f4f7]" formControlName="password"/>
-    </form>
-    <button (click)="submitLogin()" class="absolute bottom-4 right-4 text-cyan-500 bg-[#e1f4f7] ml-1 rounded-md">
+        <div class="flex flex-row gap-3">
+          <input [type]="showPassword? 'text': 'password'" placeholder="Insert your Password" class="relative text-black bg-[#e1f4f7]" formControlName="password"/>
+          <button type="button" (click)="togglePasswordVisibility()" class="text-black text-sm">
+            {{ showPassword ? 'x' : '👁' }}
+          </button>          
+        </div>
+
+        <small *ngIf="f.username.touched && f.username.errors?.['required']" class="text-red-200">
+            La contraseña es obligatoria
+        </small>        
+        
+    <button (click)="submitLogin()" class="absolute bottom-1 right-1 text-cyan-500 bg-[#e1f4f7] rounded-md">
         Submit
     </button>
+      </form>
+
   </div>
 </div>
 </div>

@@ -15,9 +15,9 @@ import { CommonModule } from '@angular/common';
 export class SignUpComponent {
   private formBuilder = inject(FormBuilder);
   userForm = this.formBuilder.group({
-    username: ['', Validators.required, Validators.email],
-    password: ['', Validators.required, Validators.minLength(8)],
-    repeatPassword: ['', Validators.required],
+    username: ['', [Validators.required, Validators.email]],
+    password: ['', [Validators.required, Validators.minLength(8)]],
+    repeatPassword: ['', [Validators.required]],
   });
 
   error: Error | null = null;
@@ -49,6 +49,17 @@ export class SignUpComponent {
     }
   });
     }
+
+  showPassword = false;
+  showRepeatPassword = false;
+
+  togglePasswordVisibility(): void {
+    this.showPassword = !this.showPassword;
+  }
+
+  toggleRepeatPasswordVisibility(): void {
+    this.showRepeatPassword = !this.showRepeatPassword;
+  }
 
 
   get f() {

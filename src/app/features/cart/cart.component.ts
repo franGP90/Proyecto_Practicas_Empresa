@@ -4,18 +4,19 @@ import { AuthService } from '../../services/auth.service';
 import { AsyncPipe, NgFor, NgIf, NgClass } from '@angular/common';
 import { Observable, take } from 'rxjs';
 import { Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 
 
 @Component({
   selector: 'app-cart',
-  imports: [NgFor, AsyncPipe, NgIf, NgClass],
+  imports: [NgFor, AsyncPipe, NgIf, FormsModule],
   templateUrl: './cart.component.html',
   styleUrl: './cart.component.scss'
 })
 export class CartComponent {
  protected cartItems$: Observable<Book[]>;   // async pipe en template
 
-  constructor(private authService: AuthService, private router: Router) {
+  constructor(protected authService: AuthService, private router: Router) {
 
       this.cartItems$ = this.authService.cart$;
 
@@ -32,11 +33,18 @@ export class CartComponent {
     return cartItems.reduce((total, item) => total + item.price, 0);
   }
 
-  buyCart(): void {
+  selectedDirection: string | null = null;
+
+buyCart(): void {
+  if (!this.selectedDirection) return;
   this.authService.cart$.pipe(take(1)).subscribe(books => {
     if (!books.length) return;
-    this.authService.buyBooks(books, true).subscribe({
-      next: () => this.router.navigate(['/purchase-steps']),
+    const items = books.map(book => ({
+      book,
+      format: book.formats.find(f => f.formatName === 'Ebook' || (f.stock ?? 0) > 0) ?? book.formats[0]
+    }));
+    this.authService.buyBooks(items, this.selectedDirection!, true).subscribe({
+      next: () => this.router.navigate(['/order-confirmation']),
       error: (err) => console.error('Error al comprar:', err)
     });
   });

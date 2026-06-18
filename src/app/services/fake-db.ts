@@ -11,16 +11,16 @@ const initialBooks: Book[] = [
   {
     id: 1, title: 'El señor de los anillos', author: 'Tolkien', price: 29.95,
     cover: 'assets/coverImages/lotr.jpg',
-    formats: [{ formatName: 'Tapa Dura', stock: 5 }, { formatName: 'Tapa Blanda', stock: 7 }, { formatName: 'Ebook', stock: 10 }],
+    formats: [{ formatName: 'Tapa Dura', stock: 20 }, { formatName: 'Tapa Blanda', stock: 20 }, { formatName: 'Ebook', stock: 10 }],
   },
   {
     id: 2, title: '1984', author: 'George Orwell', price: 19.95,
     cover: 'assets/coverImages/1984.jpeg',
-    formats: [{ formatName: 'Tapa Blanda', stock: 7 }, { formatName: 'Ebook', stock: 10 }],
+    formats: [{ formatName: 'Tapa Blanda', stock: 20 }, { formatName: 'Ebook', stock: 10 }],
   },
   {
     id: 3, title: 'Crimen y Castigo', author: 'Dostoyevski', price: 20.00,
-    formats: [{ formatName: 'Tapa Dura', stock: 2 }, { formatName: 'Ebook', stock: 10 }],
+    formats: [{ formatName: 'Tapa Dura', stock: 20 }, { formatName: 'Ebook', stock: 10 }],
   }
 ];
 

@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BehaviorSubject, Observable, of, tap } from 'rxjs';
 import { User } from '../models/user.model';
-import { Book } from '../models/book.model';
+import { Book, Format } from '../models/book.model';
 
 @Injectable({
   providedIn: 'root'
@@ -125,8 +125,8 @@ getCart(): Observable<Book[]> {
   return this.http.get<Book[]>(`${this.api}/cart`);
 }
 
-buyBooks(books: Book[], clearCart = false): Observable<any> {
-  return this.http.post<any>(`${this.api}/orders`, { books })
+buyBooks(items: { book: Book; format: Format }[], direction: string, clearCart = false): Observable<any> {
+  return this.http.post<any>(`${this.api}/orders`, { items, direction })
     .pipe(
       tap(() => {
         if (clearCart) {
@@ -136,11 +136,35 @@ buyBooks(books: Book[], clearCart = false): Observable<any> {
           localStorage.setItem('cart', JSON.stringify([]));
         }
       })
+
     );
 }
 
 getOrders(): Observable<any[]> {
   return this.http.get<any[]>(`${this.api}/orders`);
 }
+
+addDirection(direction: string): Observable<any> {
+  return this.http.post<any>(`${this.api}/user/directions`, { direction })
+    .pipe(
+      tap((directions: string[]) => {
+        const user = { ...this.currentUser!, directions };
+        this.currentUserSubject.next(user);
+        localStorage.setItem('user', JSON.stringify(user));
+      })
+    );
+}
+
+removeDirection(direction: string): Observable<any> {
+  return this.http.delete<any>(`${this.api}/user/directions`, { body: { direction } })
+    .pipe(
+      tap((directions: string[]) => {
+        const user = { ...this.currentUser!, directions };
+        this.currentUserSubject.next(user);
+        localStorage.setItem('user', JSON.stringify(user));
+      })
+    );
+}
+
 }
 

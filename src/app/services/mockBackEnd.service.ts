@@ -2,7 +2,7 @@ import { HttpInterceptorFn, HttpResponse } from '@angular/common/http';
 import { of, delay } from 'rxjs';
 import { CartItem } from '../models/cart.model';
 import { Order } from '../models/order.model';
-import { Book } from '../models/book.model';
+import { Book, Format } from '../models/book.model';
 import { User } from '../models/user.model';
 import { inject } from '@angular/core';
 import { AuthService } from './auth.service';
@@ -177,14 +177,34 @@ if (req.url.endsWith('/api/orders') && req.method === 'POST') {
   const userId = getUserId(req);
   if (!userId) return of(new HttpResponse({ status: 401 }));
 
-  const { books } = req.body as { books: Book[] };
-  if (!books?.length) return of(new HttpResponse({ status: 400 }));
+  const { items, direction } = req.body as { items: { book: Book; format: Format }[]; direction: string };
+  if (!items?.length) return of(new HttpResponse({ status: 400 }));
+  if (!direction) return of(new HttpResponse({ status: 400, body: { message: 'Selecciona una dirección de envío' } }));
+
+  const books: Book[] = [];
+
+  for (const { book, format } of items) {
+    if (format.formatName !== 'Ebook') {
+      const dbBook = DB.books.find(b => b.id === book.id);
+      const dbFormat = dbBook?.formats.find(f => f.formatName === format.formatName);
+
+      if (!dbFormat || (dbFormat.stock ?? 0) <= 0) {
+        return of(new HttpResponse({
+          status: 409,
+          body: { message: `Sin stock para "${book.title}" en formato ${format.formatName}` }
+        }));
+      }
+      dbFormat.stock = (dbFormat.stock ?? 0) - 1;
+    }
+    books.push(book);
+  }
 
   const orders = DB.getOrders();
   const newOrder = {
     id: orders.length + 1,
     userId,
     books,
+    direction,
     date: new Date().toISOString()
   };
   DB.saveOrders([...orders, newOrder]);
@@ -200,6 +220,36 @@ if (req.url.endsWith('/api/orders') && req.method === 'GET') {
     status: 200,
     body: DB.getOrders().filter(o => o.userId === userId)
   })).pipe(delay(300));
+}
+
+if (req.url.endsWith('/api/user/directions') && req.method === 'POST') {
+  const userId = getUserId(req);
+  if (!userId) return of(new HttpResponse({ status: 401 }));
+
+  const { direction } = req.body as { direction: string };
+  const users = DB.getUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) return of(new HttpResponse({ status: 404 }));
+
+  user.directions = [...(user.directions ?? []), direction];
+  DB.saveUsers(users.map(u => u.id === userId ? { ...u, directions: user.directions } : u));
+
+  return of(new HttpResponse({ status: 200, body: user.directions }));
+}
+
+if (req.url.endsWith('/api/user/directions') && req.method === 'DELETE') {
+  const userId = getUserId(req);
+  if (!userId) return of(new HttpResponse({ status: 401 }));
+
+  const { direction } = req.body as { direction: string };
+  const users = DB.getUsers();
+  const user = users.find(u => u.id === userId);
+  if (!user) return of(new HttpResponse({ status: 404 }));
+
+  user.directions = (user.directions ?? []).filter(d => d !== direction);
+  DB.saveUsers(users.map(u => u.id === userId ? { ...u, directions: user.directions } : u));
+
+  return of(new HttpResponse({ status: 200, body: user.directions }));
 }
 
   if (req.url.endsWith('/api/books') && req.method === 'GET') {
